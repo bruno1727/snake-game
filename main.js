@@ -2,32 +2,74 @@ import * as THREE from './three.module.js';
 
 main();
 
-function main() {
-    const canvas = document.querySelector('#c');
-    const renderer = new THREE.WebGLRenderer({canvas});
+var currDirection = '';
+const VELOCITY = 0.05;
+var snake;
 
+
+function main() {
+
+    const canvas = document.querySelector('#c');
+
+    const renderer = new THREE.WebGLRenderer({canvas});
+    renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);    
+    
     const camera = createCamera(renderer);
 
     const scene = new THREE.Scene();
-
     scene.add(createLight());
+    snake = createSnake();
+    scene.add(snake);
 
-    scene.add(createSnake());
+    function render(now) {
 
-    function render(time) {
-        time *= 0.001;  // convert time to seconds
+        if(currDirection == 'l')
+            snake.position.x += -VELOCITY;
 
-        if (resizeRendererToDisplaySize(renderer)) {
-            const canvas = renderer.domElement;
-            camera.aspect = canvas.clientWidth / canvas.clientHeight;
-            camera.updateProjectionMatrix();
-        }
-        
+        else if(currDirection == 'u')
+            snake.position.y += VELOCITY;
+
+        else if(currDirection == 'r')
+            snake.position.x += VELOCITY;
+
+        else if(currDirection == 'd')
+            snake.position.y += -VELOCITY;
+
         renderer.render(scene, camera);
         
         requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
+}
+
+window.onkeyup = function(event){
+    console.log(event.keyCode);
+
+    if(event.keyCode == 37 || event.keyCode == 65){ //left
+        console.log('left!');
+        currDirection = 'l';
+    } else if(event.keyCode == 38 || event.keyCode == 87){ //up
+        console.log('up!');
+        currDirection = 'u';
+        
+    } else if(event.keyCode == 39 || event.keyCode == 68){ //right
+        console.log('right!');
+        currDirection = 'r';
+        
+    } else if(event.keyCode == 40 || event.keyCode == 83){ //down
+        console.log('down!');
+        currDirection = 'd';
+    } else if(event.keyCode == 27 || event.keyCode == 13 || event.keyCode == 32){ //esc/space/enter
+        console.log('reset!');
+        reset();
+    }
+
+}
+
+function reset(){
+    snake.position.x = 0;
+    snake.position.y = 0;
+    currDirection = '';
 }
 
 function createCamera(renderer){
@@ -54,25 +96,13 @@ function createLight(){
 
 function createSnake(){
     
-    const boxWidth = 1;
-    const boxHeight = 1;
-    const boxDepth = 1;
-    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+    const width = 1;
+    const height = 1;
+    const geometry = new THREE.PlaneBufferGeometry(width, height);
 
     const material = new THREE.MeshPhongMaterial();
     const cube = new THREE.Mesh(geometry, material);
     cube.position.x = 0;
 
     return cube;
-}
-
-function resizeRendererToDisplaySize(renderer) {
-    const canvas = renderer.domElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    const needResize = canvas.width !== width || canvas.height !== height;
-    if (needResize) {
-        renderer.setSize(width, height, false);
-    }
-    return needResize;
 }
