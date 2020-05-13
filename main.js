@@ -12,7 +12,7 @@ function main() {
     const canvas = document.querySelector('#c');
 
     const renderer = new THREE.WebGLRenderer({canvas});
-    renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);    
+    renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);
     
     const camera = createCamera(renderer);
 
@@ -21,7 +21,34 @@ function main() {
     snake = createSnake();
     scene.add(snake);
 
+
+    const visibleHeightAtZDepth = ( depth, camera ) => {
+        // compensate for cameras not positioned at z=0
+        const cameraOffset = camera.position.z;
+        if ( depth < cameraOffset ) depth -= cameraOffset;
+        else depth += cameraOffset;
+      
+        // vertical fov in radians
+        const vFOV = camera.fov * Math.PI / 180; 
+      
+        // Math.abs to ensure the result is always positive
+        return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
+      };
+      
+      const visibleWidthAtZDepth = ( depth, camera ) => {
+        const height = visibleHeightAtZDepth( depth, camera );
+        return height * camera.aspect;
+      };
+    
+
+    
     function render(now) {
+        
+        if(snake.position.x > ((visibleWidthAtZDepth(0, camera)/2)  - snake.scale.x/2) )
+            reset();
+
+        if(snake.position.y > ((visibleHeightAtZDepth(0, camera)/2)  - snake.scale.y/2) )
+            reset();
 
         if(currDirection == 'l')
             snake.position.x += -VELOCITY;
@@ -63,7 +90,6 @@ window.onkeyup = function(event){
         console.log('reset!');
         reset();
     }
-
 }
 
 function reset(){
@@ -79,7 +105,7 @@ function createCamera(renderer){
     const near = 0.1;
     const far = 1000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.z = 5;
+    camera.position.z = 1;
 
     return camera;
 }
@@ -102,7 +128,6 @@ function createSnake(){
 
     const material = new THREE.MeshPhongMaterial();
     const cube = new THREE.Mesh(geometry, material);
-    cube.position.x = 0;
 
     return cube;
 }
