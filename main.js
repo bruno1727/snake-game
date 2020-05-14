@@ -17,10 +17,10 @@ function main() {
 
     const scene = new THREE.Scene();
     scene.add(createLight());
-    snake = createSnake();
+    const snake = createSnake();
     scene.add(snake);
     
-
+    refreshFood(camera, scene);
     
     function render(now) {
         
@@ -69,14 +69,48 @@ window.onkeyup = function(event){
     }
 }
 
+function refreshFood(camera, scene){
+
+    const width = 1;
+    const height = 1;
+    const geometry = new THREE.PlaneBufferGeometry(width, height);
+
+    const material = new THREE.MeshPhongMaterial();
+    const food = new THREE.Mesh(geometry, material);
+
+    food.position.x = Math.random() * ( (getMaxX(camera) - food.scale.x) - getMinX(camera)) + getMinX(camera);
+    food.position.y = Math.random() * ( (getMaxY(camera) - food.scale.y) - getMinY(camera)) + getMinY(camera);
+
+    console.log("food: (" + food.position.x + ", " + food.position.y + ")");
+
+    scene.add(food);
+
+}
+
 function collidedWithWall(object, camera){
 
     return object.position.x > ((visibleWidth(camera)/2)  - object.scale.x/2) 
         || object.position.y > ((visibleHeight(camera)/2)  - object.scale.y/2);
 }
 
+function getMaxX(camera){
+    return visibleWidth(camera)/2;
+}
+
+function getMinX(camera){
+    return -visibleWidth(camera)/2;
+}
+
+function getMaxY(camera){
+    return visibleHeight(camera)/2;
+}
+
+function getMinY(camera){
+    return -visibleHeight(camera)/2;
+}
+
 function visibleHeight(camera){
-    return 2 * Math.tan( toRadians(camera.fov) / 2 ) * camera.position.z;;
+    return 2 * Math.tan( toRadians(camera.fov) / 2 ) * camera.position.z;
 } 
     
 
@@ -84,7 +118,9 @@ function visibleWidth(camera){
     return 2 * Math.tan( toRadians(camera.fov) / 2 ) * camera.position.z * camera.aspect;
 }
 
-const toRadians = (degrees) => degrees * Math.PI / 180;
+function toRadians(degrees){
+    return degrees * Math.PI / 180;
+}
 
 function reset(object){
     object.position.x = 0;
