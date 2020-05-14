@@ -3,8 +3,7 @@ import * as THREE from './three.module.js';
 main();
 
 var currDirection = '';
-const VELOCITY = 0.05;
-var snake;
+const VELOCITY = 0.08;
 
 
 function main() {
@@ -20,35 +19,13 @@ function main() {
     scene.add(createLight());
     snake = createSnake();
     scene.add(snake);
-
-
-    const visibleHeightAtZDepth = ( depth, camera ) => {
-        // compensate for cameras not positioned at z=0
-        const cameraOffset = camera.position.z;
-        if ( depth < cameraOffset ) depth -= cameraOffset;
-        else depth += cameraOffset;
-      
-        // vertical fov in radians
-        const vFOV = camera.fov * Math.PI / 180; 
-      
-        // Math.abs to ensure the result is always positive
-        return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
-      };
-      
-      const visibleWidthAtZDepth = ( depth, camera ) => {
-        const height = visibleHeightAtZDepth( depth, camera );
-        return height * camera.aspect;
-      };
     
 
     
     function render(now) {
         
-        if(snake.position.x > ((visibleWidthAtZDepth(0, camera)/2)  - snake.scale.x/2) )
-            reset();
-
-        if(snake.position.y > ((visibleHeightAtZDepth(0, camera)/2)  - snake.scale.y/2) )
-            reset();
+        if(collidedWithWall(snake, camera))
+            reset(snake);
 
         if(currDirection == 'l')
             snake.position.x += -VELOCITY;
@@ -92,9 +69,26 @@ window.onkeyup = function(event){
     }
 }
 
-function reset(){
-    snake.position.x = 0;
-    snake.position.y = 0;
+function collidedWithWall(object, camera){
+
+    return object.position.x > ((visibleWidth(camera)/2)  - object.scale.x/2) 
+        || object.position.y > ((visibleHeight(camera)/2)  - object.scale.y/2);
+}
+
+function visibleHeight(camera){
+    return 2 * Math.tan( toRadians(camera.fov) / 2 ) * camera.position.z;;
+} 
+    
+
+function visibleWidth(camera){
+    return 2 * Math.tan( toRadians(camera.fov) / 2 ) * camera.position.z * camera.aspect;
+}
+
+const toRadians = (degrees) => degrees * Math.PI / 180;
+
+function reset(object){
+    object.position.x = 0;
+    object.position.y = 0;
     currDirection = '';
 }
 
@@ -103,9 +97,9 @@ function createCamera(renderer){
     const fov = 75;
     const aspect = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
     const near = 0.1;
-    const far = 1000;
+    const far = 100;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.z = 1;
+    camera.position.z = 10;
 
     return camera;
 }
