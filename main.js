@@ -3,7 +3,11 @@ import * as THREE from './three.module.js';
 main();
 
 var currDirection = '';
+var points = 0;
+var food;
 const VELOCITY = 0.08;
+var camera;
+var scene;
 
 
 function main() {
@@ -13,16 +17,21 @@ function main() {
     const renderer = new THREE.WebGLRenderer({canvas});
     renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);
     
-    const camera = createCamera(renderer);
+    camera = createCamera(renderer);
 
-    const scene = new THREE.Scene();
+    scene = new THREE.Scene();
     scene.add(createLight());
     const snake = createSnake();
     scene.add(snake);
     
-    refreshFood(camera, scene);
+    food = refreshFood(camera, scene);
     
     function render(now) {
+
+        if(collided(snake, food)){
+            score();
+            food = refreshFood(camera, scene);
+        }
         
         if(collidedWithWall(snake, camera))
             reset(snake);
@@ -69,14 +78,22 @@ window.onkeyup = function(event){
     }
 }
 
+function score(){
+    points++;
+    console.log("score: " + points);
+}
+
 function refreshFood(camera, scene){
+
+    if(food)
+        scene.remove(food);
 
     const width = 1;
     const height = 1;
     const geometry = new THREE.PlaneBufferGeometry(width, height);
 
     const material = new THREE.MeshPhongMaterial();
-    const food = new THREE.Mesh(geometry, material);
+    food = new THREE.Mesh(geometry, material);
 
     food.position.x = Math.random() * ( (getMaxX(camera) - food.scale.x) - getMinX(camera)) + getMinX(camera);
     food.position.y = Math.random() * ( (getMaxY(camera) - food.scale.y) - getMinY(camera)) + getMinY(camera);
@@ -85,6 +102,23 @@ function refreshFood(camera, scene){
 
     scene.add(food);
 
+    return food;
+}
+
+function collided(object1, object2){
+
+    const object1FirstX = object1.position.x  - object1.scale.x/2;
+    const object1LastX = object1.position.x + object1.scale.x/2;
+    const object1FirstY = object1.position.y - object1.scale.y/2;
+    const object1LastY = object1.position.y + object1.scale.y/2;
+    
+    const object2FirstX = object2.position.x - object2.scale.x/2;
+    const object2LastX = object2.position.x + object2.scale.x/2;
+    const object2FirstY = object2.position.y - object2.scale.y/2;
+    const object2LastY = object2.position.y + object2.scale.y/2;
+
+    return (object1LastX >= object2FirstX  && object1FirstX <= object2LastX)
+     && (object1LastY >= object2FirstY  && object1FirstY <= object2LastY);
 }
 
 function collidedWithWall(object, camera){
