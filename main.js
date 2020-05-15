@@ -89,8 +89,11 @@ function refreshFood(camera, scene){
 
 function collidedWithWall(object, camera){
 
-    return object.position.x > ((visibleWidth(camera)/2)  - object.scale.x/2) 
-        || object.position.y > ((visibleHeight(camera)/2)  - object.scale.y/2);
+    const xLimit = ((visibleWidth(camera)/2)  - object.scale.x/2);
+    const yLimit = ((visibleHeight(camera)/2)  - object.scale.y/2);
+
+    return Math.abs(object.position.x) > xLimit
+        || Math.abs(object.position.y) > yLimit;
 }
 
 function getMaxX(camera){
