@@ -59,24 +59,20 @@ function main() {
 }
 
 window.onkeyup = function(event){
-    console.log(event.keyCode);
 
     if(event.keyCode == 37 || event.keyCode == 65){ //left
-        console.log('left!');
         currDirection = LEFT;
+        
     } else if(event.keyCode == 38 || event.keyCode == 87){ //up
-        console.log('up!');
         currDirection = UP;
         
-    } else if(event.keyCode == 39 || event.keyCode == 68){ //right
-        console.log('right!');
+    } else if(event.keyCode == 39 || event.keyCode == 68){ //righ
         currDirection = RIGHT;
         
     } else if(event.keyCode == 40 || event.keyCode == 83){ //down
-        console.log('down!');
         currDirection = DOWN;
+
     } else if(event.keyCode == 27 || event.keyCode == 13 || event.keyCode == 32){ //esc/space/enter
-        console.log('reset!');
         reset();
     }
 }
@@ -100,8 +96,6 @@ function refreshFood(camera, scene){
 
     food.position.x = Math.random() * ( (getMaxX(camera) - food.scale.x) - getMinX(camera)) + getMinX(camera);
     food.position.y = Math.random() * ( (getMaxY(camera) - food.scale.y) - getMinY(camera)) + getMinY(camera);
-
-    console.log("food: (" + food.position.x + ", " + food.position.y + ")");
 
     scene.add(food);
 
