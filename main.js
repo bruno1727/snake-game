@@ -8,6 +8,10 @@ var food;
 const VELOCITY = 0.08;
 var camera;
 var scene;
+const LEFT = 'l';
+const UP = 'u';
+const RIGHT = 'r';
+const DOWN = 'd';
 
 function main() {
 
@@ -35,16 +39,16 @@ function main() {
         if(collidedWithWall(snake, camera))
             reset(snake);
 
-        if(currDirection == 'l')
+        if(currDirection == LEFT)
             snake.position.x += -VELOCITY;
 
-        else if(currDirection == 'u')
+        else if(currDirection == UP)
             snake.position.y += VELOCITY;
 
-        else if(currDirection == 'r')
+        else if(currDirection == RIGHT)
             snake.position.x += VELOCITY;
 
-        else if(currDirection == 'd')
+        else if(currDirection == DOWN)
             snake.position.y += -VELOCITY;
 
         renderer.render(scene, camera);
@@ -59,18 +63,18 @@ window.onkeyup = function(event){
 
     if(event.keyCode == 37 || event.keyCode == 65){ //left
         console.log('left!');
-        currDirection = 'l';
+        currDirection = LEFT;
     } else if(event.keyCode == 38 || event.keyCode == 87){ //up
         console.log('up!');
-        currDirection = 'u';
+        currDirection = UP;
         
     } else if(event.keyCode == 39 || event.keyCode == 68){ //right
         console.log('right!');
-        currDirection = 'r';
+        currDirection = RIGHT;
         
     } else if(event.keyCode == 40 || event.keyCode == 83){ //down
         console.log('down!');
-        currDirection = 'd';
+        currDirection = DOWN;
     } else if(event.keyCode == 27 || event.keyCode == 13 || event.keyCode == 32){ //esc/space/enter
         console.log('reset!');
         reset();
