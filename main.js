@@ -9,7 +9,6 @@ const VELOCITY = 0.08;
 var camera;
 var scene;
 
-
 function main() {
 
     const canvas = document.querySelector('#c');
