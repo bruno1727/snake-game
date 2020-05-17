@@ -1,61 +1,115 @@
 import * as THREE from './three.module.js';
 
-main();
-
 var currDirection = '';
 var points = 0;
-var food;
+export var food;
 const VELOCITY = 0.08;
 var camera;
 var scene;
+export var snake;
+var renderer;
 const LEFT = 'l';
 const UP = 'u';
 const RIGHT = 'r';
 const DOWN = 'd';
 
-function main() {
+export function getActionSpace(){
+    return 4;
+}
+
+export function step(direction){
+    const pointsTemp = points;
+    currDirection = direction;
+
+    return {
+        done: points > pointsTemp,
+        newState: calculateEuclideanDistance(snake, food),
+        reward: points > pointsTemp ? 0 : -1
+    };
+}
+
+function calculateEuclideanDistance(object1, object2){
+    return Math.sqrt( 
+        Math.pow(object1.position.x - object2.position.x, 2)
+        + Math.pow(object1.position.y - object2.position.y, 2)
+        )
+}
+
+export function calculateObsSpaceHigh(object1, object2){
+
+    const object1Temp = createSnake();
+    object1Temp.scale.x = object1.scale.x;
+    object1Temp.scale.y = object1.scale.y;
+    object1Temp.position.x = getMinX(camera) + object1Temp.scale.x/2;
+    object1Temp.position.y = getMaxY(camera) - object1Temp.scale.y/2;
+    
+    const object2Temp = createSnake();
+    object2Temp.scale.x = object2.scale.x;
+    object2Temp.scale.y = object2.scale.y;
+    object2Temp.position.x = getMaxX(camera) - object2Temp.scale.x/2;
+    object2Temp.position.y = getMinY(camera) + object2Temp.scale.y/2;
+
+    return calculateEuclideanDistance(object1Temp, object2Temp);
+}
+
+export function calculateObsSpaceLow(object1, object2){
+    
+    const object1Temp = createSnake();
+    object1Temp.scale.x = object1.scale.x;
+    object1Temp.scale.y = object1.scale.y;
+    object1Temp.position.x = 0;
+    object1Temp.position.y = 0;
+    
+    const object2Temp = createSnake();
+    object2Temp.scale.x = object2.scale.x;
+    object2Temp.scale.y = object2.scale.y;
+    object2Temp.position.x = object1Temp.position.x + object1Temp.scale.x/2 + object2Temp.scale.x/2;
+    object2Temp.position.y = object1Temp.position.y;
+
+    return calculateEuclideanDistance(object1Temp, object2Temp);
+}
+
+export function create() {
 
     const canvas = document.querySelector('#c');
 
-    const renderer = new THREE.WebGLRenderer({canvas});
+    renderer = new THREE.WebGLRenderer({canvas});
     renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false);
     
     camera = createCamera(renderer);
 
     scene = new THREE.Scene();
     scene.add(createLight());
-    const snake = createSnake();
+    snake = createSnake();
     scene.add(snake);
     
     food = refreshFood(camera, scene);
-    
-    function render(now) {
+}
 
-        if(collided(snake, food)){
-            score();
-            food = refreshFood(camera, scene);
-        }
-        
-        if(collidedWithWall(snake, camera))
-            reset(snake);
+export function render(now) {
+    console.log('begin');
 
-        if(currDirection == LEFT)
-            snake.position.x += -VELOCITY;
-
-        else if(currDirection == UP)
-            snake.position.y += VELOCITY;
-
-        else if(currDirection == RIGHT)
-            snake.position.x += VELOCITY;
-
-        else if(currDirection == DOWN)
-            snake.position.y += -VELOCITY;
-
-        renderer.render(scene, camera);
-        
-        requestAnimationFrame(render);
+    if(collided(snake, food)){
+        score();
+        food = refreshFood(camera, scene);
     }
-    requestAnimationFrame(render);
+    
+    if(collidedWithWall(snake, camera))
+        reset(snake);
+
+    if(currDirection == LEFT)
+        snake.position.x += -VELOCITY;
+
+    else if(currDirection == UP)
+        snake.position.y += VELOCITY;
+
+    else if(currDirection == RIGHT)
+        snake.position.x += VELOCITY;
+
+    else if(currDirection == DOWN)
+        snake.position.y += -VELOCITY;
+
+    renderer.render(scene, camera);
 }
 
 window.onkeyup = function(event){
@@ -94,12 +148,16 @@ function refreshFood(camera, scene){
     const material = new THREE.MeshPhongMaterial();
     food = new THREE.Mesh(geometry, material);
 
-    food.position.x = Math.random() * ( (getMaxX(camera) - food.scale.x) - getMinX(camera)) + getMinX(camera);
-    food.position.y = Math.random() * ( (getMaxY(camera) - food.scale.y) - getMinY(camera)) + getMinY(camera);
+    food.position.x = random( (getMaxX(camera) - food.scale.x), getMinX(camera) );
+    food.position.y = random( (getMaxY(camera) - food.scale.y), getMinY(camera) );
 
     scene.add(food);
 
     return food;
+}
+
+export function random(min, max){
+    return Math.random() * (max - min) + min;
 }
 
 function collided(object1, object2){
