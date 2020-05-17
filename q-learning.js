@@ -11,6 +11,7 @@ var DISCRETE_SIZE = 20;
 var discreteWindowSize = (obsSpaceHigh - obsSpaceLow)/DISCRETE_SIZE;
 var actionSpace = env.getActionSpace();
 var qTable = generateQTable(-2, 0, [DISCRETE_SIZE, actionSpace]);
+var done = 0;
 
 const LEARNING_RATE = 0.1;
 const DISCOUNT = 0.95;
@@ -35,44 +36,52 @@ console.log('episode '  + count);
 console.log('epsilon '  + epsilon);
 console.log(qTable);
 requestAnimationFrame(loop);
-function loop(){
+var then = 0;
+function loop(now){
     
-    const action = Math.random() > epsilon ? findIndexWithMaxQValue(qTable[discreteState]) : parseInt(env.random(0, env.getActionSpace()));
-    const result = env.step(action);
-    done = result.done;
-    const reward = result.reward;
-    var newDiscrateState = getDiscreteState(result.newState);
-    //console.log("done: " + done +  ", reward: " + result.reward + ", state: " + result.newState)
-    env.render();
-    
-    if(!done){
+
+    if(now - then > 250){
+        then = now;
+        const action = Math.random() > epsilon ? findIndexWithMaxQValue(qTable[discreteState]) : parseInt(env.random(0, env.getActionSpace()));
+        const result = env.step(action);
+        done = result.done;
+        const scored = result.scored;
+        const reward = result.reward;
+        var newDiscrateState = getDiscreteState(result.newState);
+        //console.log("done: " + done +  ", reward: " + result.reward + ", state: " + result.newState)
+        env.render();
         
-        const maxFutureQ = findMaxQValue(qTable[newDiscrateState]);
-        const currentQ = qTable[discreteState][action];
-        
-        var newQ = (1 - LEARNING_RATE) * currentQ + LEARNING_RATE * (reward + DISCOUNT * maxFutureQ);
-        
-        qTable[discreteState][action] = newQ;
-    } else{
-        console.log('done!')
-        qTable[discreteState][action] = 0;
-    }
-    
-    discreteState = newDiscrateState;
-    
-    if(!done){
-        requestAnimationFrame(loop);
-    } else{
-        if(count <= EPISODES){
-            if (END_EPSILON_DECAYING >= count >= START_EPSILON_DECAYING) epsilon -= epsilonDecayValue;
+        if(!done){
             
-            count++;
-            console.log('episode '  + count);
-            console.log('epsilon '  + epsilon);
-            console.log(qTable);
+            const maxFutureQ = findMaxQValue(qTable[newDiscrateState]);
+            const currentQ = qTable[discreteState][action];
+            
+            var newQ = (1 - LEARNING_RATE) * currentQ + LEARNING_RATE * (reward + DISCOUNT * maxFutureQ);
+            
+            qTable[discreteState][action] = newQ;
             requestAnimationFrame(loop);
+        } else if(scored){
+            console.log('score!')
+            qTable[discreteState][action] = env.SCORE_REWARD;
         }
+        
+        discreteState = newDiscrateState;
+        
+        if(done){
+            if(count <= EPISODES){
+                if (END_EPSILON_DECAYING >= count >= START_EPSILON_DECAYING) epsilon -= epsilonDecayValue;
+                count++;
+                env.reset();
+                console.log('episode '  + count);
+                console.log('epsilon '  + epsilon);
+                console.log(qTable);
+                requestAnimationFrame(loop);
+            }
+        }
+    } else{
+        requestAnimationFrame(loop);
     }
+    
 }
 
 function findIndexWithMaxQValue(qTableRow){

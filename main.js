@@ -4,7 +4,7 @@ var currDirection = -1;
 var prevDirection = currDirection;
 var points = 0;
 export var food;
-const VELOCITY = 0.08;
+const VELOCITY = 2.5;
 var camera;
 var scene;
 export var snake;
@@ -14,19 +14,33 @@ const UP = 1;
 const RIGHT = 2;
 const DOWN = 3;
 var pointsTemp = points;
+const DEFAULT_SIZE = 4;
+var stepCount = 0;
+export const SCORE_REWARD = 25;
+const MOVE_REWARD = -1;
 
 export function getActionSpace(){
     return 4;
 }
 
 export function step(direction){
+    stepCount++;
     setDirection(direction);
-    const done = points > pointsTemp;
-    if(done) points = pointsTemp;
+    const scored = points > pointsTemp;
+    if(scored) pointsTemp = points;
+
+    var reward;
+    if(points > pointsTemp){
+        reward = SCORE_REWARD;
+    } else{
+        reward = MOVE_REWARD;
+    }
+
     return {
-        done: done,
+        done: stepCount % 200 == 0 || scored,
         newState: calculateEuclideanDistance(snake, food),
-        reward: points > pointsTemp ? 0 : -1
+        reward: reward,
+        scored: scored
     };
 }
 
@@ -48,7 +62,7 @@ export function reset(object){
     object = object || snake;
     object.position.x = 0;
     object.position.y = 0;
-    currDirection = -1;
+    setDirection(-1);
 
     return {
         newState: calculateEuclideanDistance(snake, food)
@@ -160,6 +174,7 @@ window.onkeyup = function(event){
 function score(){
     points++;
     console.log("score: " + points);
+    reset();
 }
 
 function refreshFood(camera, scene){
@@ -169,8 +184,8 @@ function refreshFood(camera, scene){
         return food;
     }
 
-    const width = 5;
-    const height = 5;
+    const width = DEFAULT_SIZE;
+    const height = 32;
     const geometry = new THREE.PlaneBufferGeometry(width, height);
 
     const material = new THREE.MeshPhongMaterial();
@@ -266,8 +281,8 @@ function createLight(){
 
 function createSnake(){
     
-    const width = 5;
-    const height = 5;
+    const width = DEFAULT_SIZE;
+    const height = DEFAULT_SIZE;
     const geometry = new THREE.PlaneBufferGeometry(width, height);
 
     const material = new THREE.MeshPhongMaterial();
