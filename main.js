@@ -1,6 +1,6 @@
 import * as THREE from './three.module.js';
 
-var currDirection = '';
+var currDirection = -1;
 var points = 0;
 export var food;
 const VELOCITY = 0.08;
@@ -8,10 +8,10 @@ var camera;
 var scene;
 export var snake;
 var renderer;
-const LEFT = 'l';
-const UP = 'u';
-const RIGHT = 'r';
-const DOWN = 'd';
+const LEFT = 0;
+const UP = 1;
+const RIGHT = 2;
+const DOWN = 3;
 
 export function getActionSpace(){
     return 4;
@@ -26,6 +26,18 @@ export function step(direction){
         newState: calculateEuclideanDistance(snake, food),
         reward: points > pointsTemp ? 0 : -1
     };
+}
+
+export function reset(object){
+
+    object = object || snake;
+    object.position.x = 0;
+    object.position.y = 0;
+    currDirection = -1;
+
+    return {
+        newState: calculateEuclideanDistance(snake, food)
+    }
 }
 
 function calculateEuclideanDistance(object1, object2){
@@ -87,7 +99,6 @@ export function create() {
 }
 
 export function render(now) {
-    console.log('begin');
 
     if(collided(snake, food)){
         score();
@@ -212,12 +223,6 @@ function visibleWidth(camera){
 
 function toRadians(degrees){
     return degrees * Math.PI / 180;
-}
-
-function reset(object){
-    object.position.x = 0;
-    object.position.y = 0;
-    currDirection = '';
 }
 
 function createCamera(renderer){
