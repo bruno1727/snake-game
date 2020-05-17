@@ -16,42 +16,62 @@ const LEARNING_RATE = 0.1;
 const DISCOUNT = 0.95;
 const EPISODES = 25000;
 
-console.log(obsSpaceHigh); 
-console.log(obsSpaceLow);
-console.log(discreteWindowSize);
+var epsilon = 1;
+const START_EPSILON_DECAYING = 1;
+const END_EPSILON_DECAYING = EPISODES//2;
+const epsilonDecayValue = epsilon/(END_EPSILON_DECAYING - START_EPSILON_DECAYING);
+
+//console.log(obsSpaceHigh); 
+//console.log(obsSpaceLow);
+//console.log(discreteWindowSize);
 
 var discreteState = getDiscreteState(env.reset().newState);
-console.log(discreteState);
-console.log(qTable);
+//console.log(discreteState);
 
+var count = 1;
+
+
+console.log('episode '  + count);
+console.log('epsilon '  + epsilon);
+console.log(qTable);
 requestAnimationFrame(loop);
 function loop(){
-
-    const action = findIndexWithMaxQValue(qTable[discreteState]);
-    //console.log(action);
+    
+    const action = Math.random() > epsilon ? findIndexWithMaxQValue(qTable[discreteState]) : parseInt(env.random(0, env.getActionSpace()));
     const result = env.step(action);
     done = result.done;
     const reward = result.reward;
     var newDiscrateState = getDiscreteState(result.newState);
     //console.log("done: " + done +  ", reward: " + result.reward + ", state: " + result.newState)
     env.render();
-
+    
     if(!done){
-
+        
         const maxFutureQ = findMaxQValue(qTable[newDiscrateState]);
         const currentQ = qTable[discreteState][action];
-
+        
         var newQ = (1 - LEARNING_RATE) * currentQ + LEARNING_RATE * (reward + DISCOUNT * maxFutureQ);
-
+        
         qTable[discreteState][action] = newQ;
     } else{
+        console.log('done!')
         qTable[discreteState][action] = 0;
     }
-
+    
     discreteState = newDiscrateState;
-
-    if(!done && count <= EPISODES){
+    
+    if(!done){
         requestAnimationFrame(loop);
+    } else{
+        if(count <= EPISODES){
+            if (END_EPSILON_DECAYING >= count >= START_EPSILON_DECAYING) epsilon -= epsilonDecayValue;
+            
+            count++;
+            console.log('episode '  + count);
+            console.log('epsilon '  + epsilon);
+            console.log(qTable);
+            requestAnimationFrame(loop);
+        }
     }
 }
 

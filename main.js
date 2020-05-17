@@ -1,6 +1,7 @@
 import * as THREE from './three.module.js';
 
 var currDirection = -1;
+var prevDirection = currDirection;
 var points = 0;
 export var food;
 const VELOCITY = 0.08;
@@ -12,20 +13,34 @@ const LEFT = 0;
 const UP = 1;
 const RIGHT = 2;
 const DOWN = 3;
+var pointsTemp = points;
 
 export function getActionSpace(){
     return 4;
 }
 
 export function step(direction){
-    const pointsTemp = points;
-    currDirection = direction;
-
+    setDirection(direction);
+    const done = points > pointsTemp;
+    if(done) points = pointsTemp;
     return {
-        done: points > pointsTemp,
+        done: done,
         newState: calculateEuclideanDistance(snake, food),
         reward: points > pointsTemp ? 0 : -1
     };
+}
+
+function setDirection(direction){
+
+    prevDirection = currDirection;
+    currDirection = direction;
+
+    if( (prevDirection == RIGHT && currDirection == LEFT) 
+    || (prevDirection == LEFT && currDirection == RIGHT)
+    || (prevDirection == DOWN && currDirection == UP)
+    || (prevDirection == UP && currDirection == DOWN))
+        currDirection = prevDirection;
+    
 }
 
 export function reset(object){
@@ -50,16 +65,16 @@ function calculateEuclideanDistance(object1, object2){
 export function calculateObsSpaceHigh(object1, object2){
 
     const object1Temp = createSnake();
-    object1Temp.scale.x = object1.scale.x;
-    object1Temp.scale.y = object1.scale.y;
-    object1Temp.position.x = getMinX(camera) + object1Temp.scale.x/2;
-    object1Temp.position.y = getMaxY(camera) - object1Temp.scale.y/2;
+    object1Temp.geometry.parameters.width = object1.geometry.parameters.width;
+    object1Temp.geometry.parameters.height = object1.geometry.parameters.height;
+    object1Temp.position.x = getMinX(camera) + object1Temp.geometry.parameters.width/2;
+    object1Temp.position.y = getMaxY(camera) - object1Temp.geometry.parameters.height/2;
     
     const object2Temp = createSnake();
-    object2Temp.scale.x = object2.scale.x;
-    object2Temp.scale.y = object2.scale.y;
-    object2Temp.position.x = getMaxX(camera) - object2Temp.scale.x/2;
-    object2Temp.position.y = getMinY(camera) + object2Temp.scale.y/2;
+    object2Temp.geometry.parameters.width = object2.geometry.parameters.width;
+    object2Temp.geometry.parameters.height = object2.geometry.parameters.height;
+    object2Temp.position.x = getMaxX(camera) - object2Temp.geometry.parameters.width/2;
+    object2Temp.position.y = getMinY(camera) + object2Temp.geometry.parameters.height/2;
 
     return calculateEuclideanDistance(object1Temp, object2Temp);
 }
@@ -67,15 +82,15 @@ export function calculateObsSpaceHigh(object1, object2){
 export function calculateObsSpaceLow(object1, object2){
     
     const object1Temp = createSnake();
-    object1Temp.scale.x = object1.scale.x;
-    object1Temp.scale.y = object1.scale.y;
+    object1Temp.geometry.parameters.width = object1.geometry.parameters.width;
+    object1Temp.geometry.parameters.height = object1.geometry.parameters.height;
     object1Temp.position.x = 0;
     object1Temp.position.y = 0;
     
     const object2Temp = createSnake();
-    object2Temp.scale.x = object2.scale.x;
-    object2Temp.scale.y = object2.scale.y;
-    object2Temp.position.x = object1Temp.position.x + object1Temp.scale.x/2 + object2Temp.scale.x/2;
+    object2Temp.geometry.parameters.width = object2.geometry.parameters.width;
+    object2Temp.geometry.parameters.height = object2.geometry.parameters.height;
+    object2Temp.position.x = object1Temp.position.x + object1Temp.geometry.parameters.width/2 + object2Temp.geometry.parameters.width/2;
     object2Temp.position.y = object1Temp.position.y;
 
     return calculateEuclideanDistance(object1Temp, object2Temp);
@@ -126,16 +141,16 @@ export function render(now) {
 window.onkeyup = function(event){
 
     if(event.keyCode == 37 || event.keyCode == 65){ //left
-        currDirection = LEFT;
+        setDirection(LEFT);
         
     } else if(event.keyCode == 38 || event.keyCode == 87){ //up
-        currDirection = UP;
+        setDirection(UP);
         
     } else if(event.keyCode == 39 || event.keyCode == 68){ //righ
-        currDirection = RIGHT;
+        setDirection(RIGHT);
         
     } else if(event.keyCode == 40 || event.keyCode == 83){ //down
-        currDirection = DOWN;
+        setDirection(DOWN);
 
     } else if(event.keyCode == 27 || event.keyCode == 13 || event.keyCode == 32){ //esc/space/enter
         reset();
@@ -149,18 +164,20 @@ function score(){
 
 function refreshFood(camera, scene){
 
-    if(food)
-        scene.remove(food);
+    if(food){
+        //scene.remove(food);
+        return food;
+    }
 
-    const width = 1;
-    const height = 1;
+    const width = 5;
+    const height = 5;
     const geometry = new THREE.PlaneBufferGeometry(width, height);
 
     const material = new THREE.MeshPhongMaterial();
     food = new THREE.Mesh(geometry, material);
 
-    food.position.x = random( (getMaxX(camera) - food.scale.x), getMinX(camera) );
-    food.position.y = random( (getMaxY(camera) - food.scale.y), getMinY(camera) );
+    food.position.x = random( (getMaxX(camera) - food.geometry.parameters.width), getMinX(camera) );
+    food.position.y = random( (getMaxY(camera) - food.geometry.parameters.height), getMinY(camera) );
 
     scene.add(food);
 
@@ -173,15 +190,15 @@ export function random(min, max){
 
 function collided(object1, object2){
 
-    const object1FirstX = object1.position.x  - object1.scale.x/2;
-    const object1LastX = object1.position.x + object1.scale.x/2;
-    const object1FirstY = object1.position.y - object1.scale.y/2;
-    const object1LastY = object1.position.y + object1.scale.y/2;
+    const object1FirstX = object1.position.x  - object1.geometry.parameters.width/2;
+    const object1LastX = object1.position.x + object1.geometry.parameters.width/2;
+    const object1FirstY = object1.position.y - object1.geometry.parameters.height/2;
+    const object1LastY = object1.position.y + object1.geometry.parameters.height/2;
     
-    const object2FirstX = object2.position.x - object2.scale.x/2;
-    const object2LastX = object2.position.x + object2.scale.x/2;
-    const object2FirstY = object2.position.y - object2.scale.y/2;
-    const object2LastY = object2.position.y + object2.scale.y/2;
+    const object2FirstX = object2.position.x - object2.geometry.parameters.width/2;
+    const object2LastX = object2.position.x + object2.geometry.parameters.width/2;
+    const object2FirstY = object2.position.y - object2.geometry.parameters.height/2;
+    const object2LastY = object2.position.y + object2.geometry.parameters.height/2;
 
     return (object1LastX >= object2FirstX  && object1FirstX <= object2LastX)
      && (object1LastY >= object2FirstY  && object1FirstY <= object2LastY);
@@ -189,8 +206,8 @@ function collided(object1, object2){
 
 function collidedWithWall(object, camera){
 
-    const xLimit = ((visibleWidth(camera)/2)  - object.scale.x/2);
-    const yLimit = ((visibleHeight(camera)/2)  - object.scale.y/2);
+    const xLimit = ((visibleWidth(camera)/2)  - object.geometry.parameters.width/2);
+    const yLimit = ((visibleHeight(camera)/2)  - object.geometry.parameters.height/2);
 
     return Math.abs(object.position.x) > xLimit
         || Math.abs(object.position.y) > yLimit;
@@ -249,8 +266,8 @@ function createLight(){
 
 function createSnake(){
     
-    const width = 1;
-    const height = 1;
+    const width = 5;
+    const height = 5;
     const geometry = new THREE.PlaneBufferGeometry(width, height);
 
     const material = new THREE.MeshPhongMaterial();
