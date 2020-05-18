@@ -6,6 +6,7 @@ var done = false
 env.create();
 
 var obsSpaceHigh = env.calculateObsSpaceHigh(env.snake, env.food);
+// var obsSpaceHigh = 30;
 var obsSpaceLow = env.calculateObsSpaceLow(env.snake, env.food);
 var DISCRETE_SIZE = 20;
 var discreteWindowSize = (obsSpaceHigh - obsSpaceLow)/DISCRETE_SIZE;
@@ -17,7 +18,7 @@ const LEARNING_RATE = 0.1;
 const DISCOUNT = 0.95;
 const EPISODES = 25000;
 
-var epsilon = 1;
+var epsilon = 0.5;
 const START_EPSILON_DECAYING = 1;
 const END_EPSILON_DECAYING = EPISODES//2;
 const epsilonDecayValue = epsilon/(END_EPSILON_DECAYING - START_EPSILON_DECAYING);
@@ -52,6 +53,9 @@ function loop(now){
         env.render();
         
         if(!done){
+            
+            if(!qTable[newDiscrateState])
+                debugger;
             
             const maxFutureQ = findMaxQValue(qTable[newDiscrateState]);
             const currentQ = qTable[discreteState][action];
@@ -94,6 +98,9 @@ function findIndexWithMaxQValue(qTableRow){
 }
 
 function findMaxQValue(qTableRow){
+    if(!qTableRow)
+        debugger;
+
     var max = qTableRow[0];
     qTableRow.forEach(q => {
         max = q > max ? max : q;

@@ -70,10 +70,13 @@ export function reset(object){
 }
 
 function calculateEuclideanDistance(object1, object2){
-    return Math.sqrt( 
+    const distance = Math.sqrt( 
         Math.pow(object1.position.x - object2.position.x, 2)
         + Math.pow(object1.position.y - object2.position.y, 2)
         )
+
+        if(distance < 4) debugger; //qdo snake chega no food esse valor fica menor
+    return distance;
 }
 
 export function calculateObsSpaceHigh(object1, object2){
@@ -185,14 +188,16 @@ function refreshFood(camera, scene){
     }
 
     const width = DEFAULT_SIZE;
-    const height = 32;
+    const height = 15  ;
     const geometry = new THREE.PlaneBufferGeometry(width, height);
 
     const material = new THREE.MeshPhongMaterial();
     food = new THREE.Mesh(geometry, material);
 
-    food.position.x = random( (getMaxX(camera) - food.geometry.parameters.width), getMinX(camera) );
-    food.position.y = random( (getMaxY(camera) - food.geometry.parameters.height), getMinY(camera) );
+    do{
+        food.position.x = random( (getMaxX(camera) - food.geometry.parameters.width/2), getMinX(camera) + food.geometry.parameters.width/2);
+        food.position.y = random( (getMaxY(camera) - food.geometry.parameters.height/2), getMinY(camera) + food.geometry.parameters.height/2);
+    } while(collided(snake, food));
 
     scene.add(food);
 
